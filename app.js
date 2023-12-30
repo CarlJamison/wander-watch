@@ -8,8 +8,10 @@ const app = express();
 const http = require('http');
 const server = http.Server(app);
 const port = process.env.PORT || 8888;
-
 const emailClient = new EmailClient(process.env.MAIL_CONNECTION_STRING);
+fs = require('fs');
+const email_template = fs.readFileSync('email-template.html').toString();
+const trip_template = fs.readFileSync('trip-template.html').toString();
 
 app.use(function(req, res, next) {
     if (req.headers.authorization != process.env.PASSWORD_STRING) {
@@ -61,18 +63,29 @@ cron.schedule('* * * * *', async () => {
         var flights = await getFlights(trip);
 
         results.push(
-            ...flights.filter(t => 
-                parseFloat(t.price.replace("$", "").replace(",", "")) / 7 < trip.price));
+            ...flights)//.filter(t => parseFloat(t.price.replace("$", "").replace(",", "")) / 7 < trip.price));
     }));
+
 
     if(results.length){
         console.log(`Checking complete, ${results.length} potential flights found.  Sending email . . .`);
+
+        var emailString = results.reduce(
+            (a, r) => a += trip_template
+                .replace("{{from}}", r.from)
+                .replace("{{to}}", r.to)
+                .replace("{{departure}}", new Date(r.departureDate).toLocaleDateString('en-US'))
+                .replace("{{return}}", new Date(r.returnDate).toLocaleDateString('en-US'))
+                .replace("{{price}}", r.price)
+                .replace("{{description}}", r.description),
+            "",
+        );
 
         const emailMessage = {
             senderAddress: "DoNotReply@566b52af-1f5a-4736-8532-0f99329e9235.azurecomm.net",
             content: {
                 subject: "Wander Watch",
-                plainText: JSON.stringify(results),
+                html: email_template.replace("{{flights}}", emailString),
             },
             recipients: {
                 to: [{ address: "karjaxthevaliant@gmail.com" }],
@@ -81,6 +94,9 @@ cron.schedule('* * * * *', async () => {
     
         const poller = await emailClient.beginSend(emailMessage);
         await poller.pollUntilDone();
+
+        console.log(`Email sent`);
+
     }else{
         console.log("No results found.")
     }
@@ -142,5 +158,11 @@ async function getFlights(options){
 		await browser.close();
 	}
 
-	return flightInfoList;
+	return flightInfoList.map(f => ({
+        ...f,
+        from: options.fromLocation,
+        to: options.toLocation,
+        departureDate: options.departureDate,
+        returnDate: options.returnDate,
+    }));
 };
