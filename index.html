@@ -83,6 +83,19 @@
         .fail(() => document.querySelector('#auth-modal').showModal());
     }
 
+    function remove(id){
+        $.ajax({
+            url: ENDPOINT,
+            type: 'DELETE',
+            data: { 
+                "id": id
+            },
+            success: function(result) {
+                getTrips();
+            }
+        });
+    }
+
     function addTrip(){
         try{
 
