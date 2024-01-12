@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+  <head>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Wander Watch</title>
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles.css"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  </head>
+
+<body>
+
+    <dialog id="auth-modal">
+        <input id="auth" placeholder="Password">
+        <button onclick="updateAuth()">Submit</button>
+    </dialog>
+
+    <dialog id="add-trip-modal">
+        <input id="departure" placeholder="ex. 04JUNMSPFRA">
+        <input id="return" placeholder="ex. 14JUNFRAMSP">
+        <input id="price" placeholder="Threshold Price">
+        <button onclick="addTrip()">Add Trip Watch</button>
+        <button onclick="document.querySelector('#add-trip-modal').close()">Cancel</button>
+    </dialog>
+
+   <h1>Wander Watch</h1> 
+
+    <div class="trips"></div>
+    
+</body>
+<script>
+    const ENDPOINT = "http://localhost:8888/";
+
+    var auth = localStorage.getItem('auth-code');
+    if(!auth){
+        document.querySelector('#auth-modal').showModal();
+    }else{
+        $.ajaxSetup({
+            headers : {   
+                'authorization' : auth
+            }
+        });
+
+        getTrips();
+    }
+
+    function updateAuth(){
+        
+        var auth = document.getElementById('auth').value
+
+        if(!auth) return;
+
+        document.querySelector('dialog').close();
+        localStorage.setItem('auth-code', auth);
+
+        $.ajaxSetup({
+            headers : {   
+                'authorization' : auth
+            }
+        });
+
+        getTrips();
+    }
+
+    function getTrips(){
+        $.getJSON(ENDPOINT, trips => {
+            $("div.trips").html(`
+            <span class="result add-trip" onclick="document.querySelector('#add-trip-modal').showModal()">
+                Add Trip Watch</span>`);
+
+            trips.forEach(trip => {
+            $("div.trips").append(`<span class="result">
+                <strong>${trip.fromLocation}-${trip.toLocation}</strong>
+                <strong>${new Date(trip.departureDate).toLocaleDateString()}-${new Date(trip.returnDate).toLocaleDateString()}</strong>
+                <strong>$${trip.price}</strong>
+                <button class="stage-button btn btn-primary" onclick="remove('${trip.id}')"><span class="material-symbols-outlined">delete</span></button>
+            </span>`);
+            });
+
+            $("div.trips").append('<div class="spacer"></div>')
+        })
+        .fail(() => document.querySelector('#auth-modal').showModal());
+    }
+
+    function addTrip(){
+        try{
+
+            var departure = document.getElementById('departure').value;
+            var returnTrip = document.getElementById('return').value
+
+            var trip = {
+                price: document.getElementById('price').value,
+                departure: departure.substring(0, 5),
+                return: returnTrip.substring(0, 5),
+                from: departure.substring(5, 8),
+                to: departure.substring(8, 11)
+            }   
+
+            $.post(ENDPOINT, trip, () => {
+                document.querySelector('#add-trip-modal').close();
+                getTrips();
+            });
+        }catch{
+
+        }
+    }
+</script>
+</html>

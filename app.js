@@ -1,11 +1,13 @@
 const sql = require('mssql')
 const { chromium } = require('playwright');
 require('dotenv').config()
-const express = require('express')
+const express = require('express');
+var cors = require('cors');
 const cron = require('node-cron');
 const { EmailClient } = require("@azure/communication-email");
 const app = express();
 const http = require('http');
+var bodyParser = require('body-parser')
 const server = http.Server(app);
 const port = process.env.PORT || 8888;
 const emailClient = new EmailClient(process.env.MAIL_CONNECTION_STRING);
@@ -13,6 +15,10 @@ fs = require('fs');
 const email_template = fs.readFileSync('email-template.html').toString();
 const trip_template = fs.readFileSync('trip-template.html').toString();
 
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(cors());
+app.use(express.json())
 app.use(function(req, res, next) {
     if (req.headers.authorization != process.env.PASSWORD_STRING) {
         res.status(403).json({ error: 'FORBIDDEN' });
@@ -21,49 +27,75 @@ app.use(function(req, res, next) {
     }
 });
   
-app.get('/', (req, res) => {
-    getTrips().then(r => res.status(200).send(r.recordset));
+app.get('/', async (req, res) => {
+    res.send(await getTrips());
 });
 
-//Add
 app.post('/', async (req, res) => {
-    // make sure that any items are correctly URL encoded in the connection string
+
+    var depDate = new Date(req.body.departure);
+    if(depDate < new Date()){
+        depDate.setFullYear(depDate.getFullYear() + 1)
+    }
+
+    var retDate = new Date(req.body.return);
+    if(retDate < new Date()){
+        retDate.setFullYear(retDate.getFullYear() + 1)
+    }
+
     await sql.connect(process.env.CONNECTION_STRING)
-    /*const request = new sql.Request()
-    request.input('to', sql.VarChar, 'MSP')
-    request.input('from', sql.VarChar, 'FRA')
-    request.input('departure', sql.Date, '01-07-2024')
-    request.input('return', sql.Date, '01-14-2024')
-    request.input('price', sql.Decimal, '1000.23')*/
-    /*request.query(`insert into Trips 
+    const request = new sql.Request()
+    request.input('to', sql.VarChar, req.body.to)
+    request.input('from', sql.VarChar, req.body.from)
+    request.input('departure', sql.Date, depDate)
+    request.input('return', sql.Date, retDate)
+    request.input('price', sql.Decimal, req.body.price)
+    request.query(`insert into Trips
     (toLocation, fromLocation, departureDate, returnDate, tripStatus, price) values
     (@to, @from, @departure, @return, 0, @price)`
 
     ,(err, result) => {
         console.dir(result)
         console.dir(err)
-    })*/
-    getTrips().then(r => res.status(200).send(r));
+    })
+    res.status(200).send("wow good trip");
 });
 
 //Remove
-//Edit
+app.delete("/", (req, res) => {
+    const request = new sql.Request()
+    request.input('id', sql.Int, req.param.id)
+    request.query(`delete from Trips where id = @id`
+    ,(err, result) => {
+        console.dir(result)
+        console.dir(err)
+    })
+});
+
+//TODO Edit
 
 //Daily check
 cron.schedule('* * * * *', async () => {
     console.log("Checking . . .")
+
+    await sql.connect(process.env.CONNECTION_STRING)
+    const request = new sql.Request()
+    request.input('date', sql.Date, new Date())
+    await request.query(`delete from Trips where departureDate < @date`
+    ,(err, result) => {
+        console.dir(result)
+        console.dir(err)
+    })
+
     var trips = await getTrips();
-    
-    console.log(trips);
-    //Filter out dates that have passed
 
     var results = [];
 
     await Promise.all(trips.map(async trip => {
         var flights = await getFlights(trip);
 
-        results.push(
-            ...flights)//.filter(t => parseFloat(t.price.replace("$", "").replace(",", "")) / 7 < trip.price));
+        //results.push(
+        //    ...flights.filter(t => parseFloat(t.price.replace("$", "").replace(",", "")) / 7 < trip.price));
     }));
 
 

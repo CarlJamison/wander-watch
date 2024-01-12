@@ -1,0 +1,82 @@
+.result{
+    background-color: whitesmoke;
+    padding: 16px;
+    margin: 16px auto;
+    display: flex;
+    border-radius: 20px;
+    border: 1px gray solid;
+    letter-spacing: 1.25px;
+    box-shadow: grey 2px 2px 6px;
+    color: #0052af;
+    max-width: 500px;
+}
+
+dialog::backdrop {
+    background: #ffffffaa;
+}
+
+dialog{
+    border-radius: 10px;
+    border: 1px gray solid;
+}
+
+.result strong{
+    margin-left:16px
+}
+
+.trips{
+    color:whitesmoke;
+    letter-spacing: 0.6px;
+}
+
+.btn.stage-button{
+    border-radius: 12px;
+    margin-left: 16px;
+    font-size: 8px;
+}
+
+html{
+    background: linear-gradient(45deg, #0052af, #01dbf3);
+    height: 100%;
+}
+
+body{
+    background-color: inherit !important;
+}
+
+.btn-large{
+    font-size: 20px;    
+    letter-spacing: 1.25px;
+}
+
+.text-large{
+    color: whitesmoke;
+    font-size: 20px;
+    width: 100%;
+    text-align: center;
+    letter-spacing: 2px;
+}
+
+.spacer{
+    border-bottom: whitesmoke 1px solid;
+    margin: 8px 16px;
+}
+
+h1{
+    padding: 16px;
+    border-radius: 16px;
+    background-color: whitesmoke;
+    margin: 16px;
+    text-transform: uppercase;
+    text-align: center;
+    color:#0052af
+}
+
+.add-trip{
+    text-align: center;
+    background-color: #85f1fd;
+    border-style:dashed;
+    text-transform: uppercase;
+    font-weight: bold;
+    cursor: pointer;
+}
