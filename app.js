@@ -63,8 +63,12 @@ app.post('/', async (req, res) => {
 });
 
 app.get('/check', async (req, res) => {
-    await checkFlights();
-    res.status(200).send("check complete");
+    try{
+        await checkFlights();
+        res.status(200).send("check complete");
+    }catch(e){
+        res.status(500).send(e);
+    }
 });
 
 app.delete("/", async (req, res) => {
