@@ -111,7 +111,11 @@ async function checkFlights(){
         if (err) console.dir(err)
     });
 
+    console.log("Filtered existing trips, getting trip list");
+
     var trips = await getTrips();
+
+    console.log("Recieved trips, populating flight list");
 
     var results = [];
 
