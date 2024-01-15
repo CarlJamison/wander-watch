@@ -54,6 +54,3 @@ jobs:
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_04AE3A613D3E4C59901880B8047F43BB }}
           package: .
-
-      - name: Install playwright browser
-        run: npx playwright install --with-deps chromium
