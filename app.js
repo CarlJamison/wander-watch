@@ -67,6 +67,9 @@ app.get('/check', async (req, res) => {
         await checkFlights();
         res.status(200).send("check complete");
     }catch(e){
+        console.log("Error", e.stack);
+        console.log("Error", e.name);
+        console.log("Error", e.message);
         res.status(500).send(e);
     }
 });
