@@ -140,7 +140,7 @@ async function checkFlights(){
                 html: email_template.replace("{{flights}}", emailString),
             },
             recipients: {
-                to: [{ address: "karjaxthevaliant@gmail.com" }],
+                to: [{ address: process.env.TO_EMAIL_ADDRESS }],
             },
         };
     

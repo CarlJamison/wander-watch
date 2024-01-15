@@ -24,7 +24,7 @@
         <button onclick="document.querySelector('#add-trip-modal').close()">Cancel</button>
     </dialog>
 
-   <h1>Wander Watch</h1> 
+   <h1>Wander Watch<button onclick="check()" class="btn btn-primary check">CHECK NOW</button></h1> 
 
     <div class="trips"></div>
     
@@ -81,6 +81,10 @@
             $("div.trips").append('<div class="spacer"></div>')
         })
         .fail(() => document.querySelector('#auth-modal').showModal());
+    }
+
+    function check(){
+        $.getJSON(ENDPOINT + "/check");
     }
 
     function remove(id){

@@ -80,3 +80,7 @@ h1{
     font-weight: bold;
     cursor: pointer;
 }
+
+.check{
+    margin-left: 36px
+}
