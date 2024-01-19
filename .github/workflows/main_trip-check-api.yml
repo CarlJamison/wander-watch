@@ -13,6 +13,9 @@ jobs:
   build:
     runs-on: windows-latest
 
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: 0
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,6 +29,10 @@ jobs:
           npm install
           npm run build --if-present
           npm run test --if-present
+
+      - name: Install Playwright browser
+        run: |
+          npx playwright install --with-deps webkit
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
