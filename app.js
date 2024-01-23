@@ -12,7 +12,7 @@ const fs = require('fs');
 const server = http.Server(app);
 const port = process.env.PORT || 8888;
 const emailClient = new EmailClient(process.env.MAIL_CONNECTION_STRING);
-sql.connect(process.env.CONNECTION_STRING)
+const pool = new sql.ConnectionPool(process.env.CONNECTION_STRING);
 const email_template = fs.readFileSync('email-template.html').toString();
 const trip_template = fs.readFileSync('trip-template.html').toString();
 
@@ -46,7 +46,7 @@ function processDate(dateString){
 
 app.post('/', async (req, res) => {
 
-    const request = new sql.Request()
+    const request = await getRequest();
     request.input('to', sql.VarChar, req.body.to)
     request.input('from', sql.VarChar, req.body.from)
     request.input('departure', sql.Date, processDate(req.body.departure))
@@ -76,7 +76,7 @@ app.get('/check', async (req, res) => {
 
 app.delete("/", async (req, res) => {
     
-    const request = new sql.Request()
+    const request = await getRequest();
     request.input('id', sql.Int, req.body.id)
 
     await request.query(`delete from Trips where id = @id`
@@ -95,19 +95,29 @@ server.listen(port, () => {
     console.log(`Server running at http://localhost:${port}/`);
 });
 
+async function getRequest(){
+
+    if(!pool.connected){
+        await pool.connect();
+    }
+
+    return new sql.Request(pool);
+}
+
 async function getTrips() {
 
     try {
-        return (await sql.query(`select * from Trips`)).recordset;
+        return (await (await getRequest()).query(`select * from Trips`)).recordset;
     } catch (err) {
         return err
     }
+
 }
 
 async function checkFlights(){
     console.log("Checking . . .")
 
-    const request = new sql.Request()
+    const request = await getRequest();
     request.input('date', sql.Date, new Date())
     await request.query(`delete from Trips where departureDate < @date`
     ,(err, result) => {
