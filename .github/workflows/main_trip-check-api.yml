@@ -32,7 +32,7 @@ jobs:
 
       - name: Install Playwright browser
         run: |
-          npx playwright install --with-deps webkit
+          npx playwright install --with-deps chromium
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
