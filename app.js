@@ -1,5 +1,5 @@
 const sql = require('mssql')
-const { firefox } = require('playwright');
+const { webkit } = require('playwright');
 require('dotenv').config()
 const express = require('express');
 const app = express();
@@ -179,7 +179,7 @@ async function checkFlights(){
 async function getFlights(options){
 	var flightInfoList = [];
 
-	const browser = await firefox.launch();
+	const browser = await webkit.launch();
 	const page = await browser.newPage();
 	try {
 		await page.goto('https://www.google.com/travel/flights');
