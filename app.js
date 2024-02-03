@@ -1,5 +1,5 @@
 const sql = require('mssql')
-const { webkit } = require('playwright');
+const { chromium } = require('playwright');
 require('dotenv').config()
 const express = require('express');
 const app = express();
@@ -179,7 +179,20 @@ async function checkFlights(){
 async function getFlights(options){
 	var flightInfoList = [];
 
-	const browser = await webkit.launch();
+	const browser = await chromium.connect(
+        `wss://eastus.api.playwright.microsoft.com/api/authorize/connectSession?cap=${JSON.stringify({
+            os: 'windows',
+            runId: new Date().toISOString()
+          })}`,
+        { 
+            timeout: 30000,
+            headers: {
+              'x-mpt-access-key': process.env.PLAYWRIGHT_SERVICE_ACCESS_TOKEN
+            },
+            exposeNetwork: '<loopback>'
+        }
+    );
+
 	const page = await browser.newPage();
 	try {
 		await page.goto('https://www.google.com/travel/flights');
@@ -189,11 +202,12 @@ async function getFlights(options){
 		  delay : 100
 		});
 		await page.getByRole('button', { name: 'Done' }).click({delay : 100});
-		await page.getByLabel('Where from? Minneapolis').click({delay : 100});
-		await page.getByRole('combobox', { name: 'Where else?' }).fill(options.fromLocation);
-		await page.getByRole('combobox', { name: 'Where else?' }).press('Enter', {delay : 100});
+        await page.keyboard.press('Tab', {delay : 100});
+        await page.keyboard.press('Tab', {delay : 100});
+		await page.keyboard.type(options.fromLocation, {delay : 100});
+		await page.keyboard.press('Enter', {delay : 100});
 		await page.keyboard.press('Tab', {delay : 100});
-		await page.keyboard.type(options.toLocation, {delay : 100})
+		await page.keyboard.type(options.toLocation, {delay : 100});
 		await page.getByRole('combobox', { name: 'Where else?' }).press('Enter', {delay : 100});
 		await page.keyboard.press('Tab', {delay : 100});
 		await page.getByRole('textbox', { name: 'Departure' }).fill(options.departureDate.toString());
