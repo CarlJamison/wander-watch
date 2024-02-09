@@ -1,0 +1,14 @@
+name: Daily GET Request
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # Runs at 6:00 AM CST every day
+
+jobs:
+  make-request:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Make GET request with authentication
+        run: |
+          curl --location 'https://trip-check-api.azurewebsites.net/check' --header 'Authorization: ${{ env.API_PASSWORD }}'
