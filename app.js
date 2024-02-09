@@ -1,11 +1,10 @@
 const sql = require('mssql')
-const { chromium } = require('playwright');
+const { chromium } = require('playwright-core');
 require('dotenv').config()
 const express = require('express');
 const app = express();
 const http = require('http');
 const cors = require('cors');
-const cron = require('node-cron');
 const { EmailClient } = require("@azure/communication-email");
 const bodyParser = require('body-parser');
 const fs = require('fs');
@@ -15,6 +14,7 @@ const emailClient = new EmailClient(process.env.MAIL_CONNECTION_STRING);
 const pool = new sql.ConnectionPool(process.env.CONNECTION_STRING);
 const email_template = fs.readFileSync('email-template.html').toString();
 const trip_template = fs.readFileSync('trip-template.html').toString();
+const Currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -52,9 +52,10 @@ app.post('/', async (req, res) => {
     request.input('departure', sql.Date, processDate(req.body.departure))
     request.input('return', sql.Date, processDate(req.body.return))
     request.input('price', sql.Decimal, req.body.price)
+    request.input('name', sql.VarChar, req.body.name)
     await request.query(`insert into Trips
-    (toLocation, fromLocation, departureDate, returnDate, tripStatus, price) values
-    (@to, @from, @departure, @return, 0, @price)`
+    (toLocation, fromLocation, departureDate, returnDate, tripStatus, price, tripName) values
+    (@to, @from, @departure, @return, 0, @price, @name)`
     ,(err, result) => {
         res.status(200).send("wow good trip");
         if(err) console.dir(err)
@@ -87,9 +88,6 @@ app.delete("/", async (req, res) => {
 });
 
 //TODO Edit
-
-//Daily check
-cron.schedule('0 1 * * *', checkFlights);
 
 server.listen(port, () => {
     console.log(`Server running at http://localhost:${port}/`);
@@ -135,8 +133,7 @@ async function checkFlights(){
     await Promise.all(trips.map(async trip => {
         var flights = await getFlights(trip);
 
-        results.push(
-            ...flights.filter(t => parseFloat(t.price.replace("$", "").replace(",", "")) / 7 < trip.price));
+        results.push(...flights.filter(t => t.price < trip.price));
     }));
 
 
@@ -149,15 +146,16 @@ async function checkFlights(){
                 .replace("{{to}}", r.to)
                 .replace("{{departure}}", new Date(r.departureDate).toLocaleDateString('en-US'))
                 .replace("{{return}}", new Date(r.returnDate).toLocaleDateString('en-US'))
-                .replace("{{price}}", r.price)
+                .replace("{{price}}", Currency.format(r.price))
+                .replace("{{name}}", r.name ? r.name : "")
                 .replace("{{description}}", r.description),
             "",
         );
 
         const emailMessage = {
-            senderAddress: "DoNotReply@566b52af-1f5a-4736-8532-0f99329e9235.azurecomm.net",
+            senderAddress: "trip-check@itgtrips.com",
             content: {
-                subject: "Wander Watch",
+                subject: "Trip Check Results",
                 html: email_template.replace("{{flights}}", emailString),
             },
             recipients: {
@@ -222,7 +220,10 @@ async function getFlights(options){
 				description:item.querySelector('.JMc5Xc').ariaLabel.trim().replace(" Select flight", ""), 
 				airline: item.querySelector('.sSHqwe').textContent.trim(),
 				travelTime: item.querySelector('.gvkrdb').textContent.trim(),
-				price: item.querySelector('.YMlIz.FpEdX').children[0].textContent.trim()
+				price: parseFloat(item
+                    .querySelector('.YMlIz.FpEdX')
+                    .children[0].textContent
+                    .trim().replace("$", "").replace(",", "")) / 7
 			}))
 		);
 	} catch (error) {
@@ -237,5 +238,6 @@ async function getFlights(options){
         to: options.toLocation,
         departureDate: options.departureDate,
         returnDate: options.returnDate,
+        name: options.tripName
     }));
 };

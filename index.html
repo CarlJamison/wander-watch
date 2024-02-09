@@ -17,6 +17,7 @@
     </dialog>
 
     <dialog id="add-trip-modal">
+        <input id="trip-name" placeholder="Trip Name">
         <input id="departure" placeholder="ex. 04JUNMSPFRA">
         <input id="return" placeholder="ex. 14JUNFRAMSP">
         <input id="price" placeholder="Threshold Price">
@@ -24,7 +25,7 @@
         <button onclick="document.querySelector('#add-trip-modal').close()">Cancel</button>
     </dialog>
 
-   <h1>Wander Watch<button onclick="check()" class="btn btn-primary check">CHECK NOW</button></h1> 
+    <h1>Wander Watch<button onclick="check()" class="btn btn-primary check">CHECK NOW</button></h1> 
 
     <div class="trips"></div>
     
@@ -73,6 +74,7 @@
 
             trips.forEach(trip => {
             $("div.trips").append(`<span class="result">
+                <strong>${trip.tripName ? trip.tripName : ""}</strong>
                 <strong>${trip.fromLocation}-${trip.toLocation}</strong>
                 <strong>${new Date(trip.departureDate).toLocaleDateString()}-${new Date(trip.returnDate).toLocaleDateString()}</strong>
                 <strong>$${trip.price}</strong>
@@ -110,6 +112,7 @@
 
             var trip = {
                 price: document.getElementById('price').value,
+                name: document.getElementById('trip-name').value,
                 departure: departure.substring(0, 5),
                 return: returnTrip.substring(0, 5),
                 from: departure.substring(5, 8),
