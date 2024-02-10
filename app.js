@@ -117,10 +117,8 @@ async function checkFlights(){
 
     const request = await getRequest();
     request.input('date', sql.Date, new Date())
-    await request.query(`delete from Trips where departureDate < @date`
-    ,(err, result) => {
-        if (err) console.dir(err)
-    });
+    await request.query(`delete from Trips where departureDate < @date`,
+        (err, result) => { if (err) console.dir(err) });
 
     console.log("Filtered existing trips, getting trip list");
 
