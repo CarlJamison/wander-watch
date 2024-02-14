@@ -4,7 +4,7 @@
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Wander Watch</title>
-    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="styles.css"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   </head>
@@ -17,10 +17,23 @@
     </dialog>
 
     <dialog id="add-trip-modal">
-        <input id="trip-name" placeholder="Trip Name">
-        <input id="departure" placeholder="ex. 04JUNMSPFRA">
-        <input id="return" placeholder="ex. 14JUNFRAMSP">
-        <input id="price" placeholder="Threshold Price">
+        <div style="display: grid">
+            <span style="padding: 16px;">
+                <input id="trip-name" placeholder="Trip Name">
+                <input id="price" placeholder="Threshold Price">
+            </span>
+            Enter
+            <span style="padding: 16px;">
+                <input id="departure" placeholder="ex. 04JUNMSPFRA">
+                <input id="return" placeholder="ex. 14JUNFRAMSP">
+            </span>
+            Or
+            <div style="padding: 16px; display: grid">
+                <input id="departure2" placeholder="ex. 1 AA 150Y 17AUG SA ORDCDG SS1   850P 1155A#1/O $ E">
+                <input id="return2" placeholder="ex. 2 AA 151Y 24AUG SA CDGORD SS1   240P  445P/O $ E">
+            </div>
+        </div>
+        
         <button onclick="addTrip()">Add Trip Watch</button>
         <button onclick="document.querySelector('#add-trip-modal').close()">Cancel</button>
     </dialog>
@@ -108,16 +121,32 @@
         try{
 
             var departure = document.getElementById('departure').value;
-            var returnTrip = document.getElementById('return').value
+            var returnTrip = document.getElementById('return').value;
 
             var trip = {
                 price: document.getElementById('price').value,
-                name: document.getElementById('trip-name').value,
-                departure: departure.substring(0, 5),
-                return: returnTrip.substring(0, 5),
-                from: departure.substring(5, 8),
-                to: departure.substring(8, 11)
-            }   
+                name: document.getElementById('trip-name').value
+            }
+            if(departure && departure.length){
+                trip = {
+                    ...trip,
+                    departure: departure.substring(0, 5),
+                    return: returnTrip.substring(0, 5),
+                    from: departure.substring(5, 8),
+                    to: departure.substring(8, 11)
+                }  
+            }else{
+                departure = document.getElementById('departure2').value;
+                returnTrip = document.getElementById('return2').value;
+
+                trip = {
+                    ...trip,
+                    departure: departure.split(' ')[3].substring(0, 5),
+                    return: returnTrip.split(' ')[3].substring(0, 5),
+                    from: departure.split(' ')[5].substring(0, 3),
+                    to: returnTrip.split(' ')[5].substring(0, 3)
+                }  
+            }
 
             $.post(ENDPOINT, trip, () => {
                 document.querySelector('#add-trip-modal').close();

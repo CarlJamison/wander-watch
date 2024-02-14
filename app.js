@@ -35,7 +35,7 @@ app.get('/', async (req, res) => {
 function processDate(dateString){
     var parsedDate = new Date(dateString);
     parsedDate.setFullYear(new Date().getFullYear());
-    parsedDate.setHours(23);
+    parsedDate.setDate(parsedDate.getDate() + 1);
 
     if(parsedDate < new Date()){
         parsedDate.setFullYear(parsedDate.getFullYear() + 1)
@@ -142,8 +142,8 @@ async function checkFlights(){
             (a, r) => a += trip_template
                 .replace("{{from}}", r.from)
                 .replace("{{to}}", r.to)
-                .replace("{{departure}}", new Date(r.departureDate).toLocaleDateString('en-US'))
-                .replace("{{return}}", new Date(r.returnDate).toLocaleDateString('en-US'))
+                .replace("{{departure}}", r.departureDate.toLocaleDateString('en-US'))
+                .replace("{{return}}", r.returnDate.toLocaleDateString('en-US'))
                 .replace("{{price}}", Currency.format(r.price))
                 .replace("{{name}}", r.name ? r.name : "")
                 .replace("{{description}}", r.description),
@@ -206,12 +206,16 @@ async function getFlights(options){
 		await page.keyboard.type(options.toLocation, {delay : 100});
 		await page.getByRole('combobox', { name: 'Where else?' }).press('Enter', {delay : 100});
 		await page.keyboard.press('Tab', {delay : 100});
-		await page.getByRole('textbox', { name: 'Departure' }).fill(options.departureDate.toString());
+		await page.getByRole('textbox', { name: 'Departure' }).fill(options.departureDate.toLocaleDateString('en-US'));
 		await page.keyboard.press('Tab', {delay : 100});
-		await page.getByRole('textbox', { name: 'Return' }).fill(options.returnDate.toString());
+		await page.getByRole('textbox', { name: 'Return' }).fill(options.returnDate.toLocaleDateString('en-US'));
 		await page.keyboard.press('Tab', {delay : 100});
-		await page.keyboard.press('Enter', {delay : 1000});
-		await page.waitForSelector('.pIav2d');
+		await page.keyboard.press('Enter', {delay : 100});
+        await page.waitForSelector('.pIav2d');
+        await page.waitForTimeout(900);
+		await page.getByLabel('Best Flights, Change sort').click({delay : 100});
+		await page.getByLabel('Select your sort order.').getByText('Price').click({delay : 100});
+        await page.waitForTimeout(1000);
 		
 		var flightInfoList = await page.$$eval('.pIav2d', items =>
 			items.map(item => ({
