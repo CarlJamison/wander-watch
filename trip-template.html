@@ -8,10 +8,15 @@ letter-spacing: 0.4px;
 ">
     <span>
         <strong>{{name}}</strong>
-        <strong>{{from}}-{{to}}</strong>
+        <img style="
+            padding-left: 16px;
+            padding-right: 16px;
+            width: 24px; height: 24px;
+            vertical-align: middle;"
+            src="{{thumbnail}}"></img>
+        <strong>{{airline}}</strong>
+        <strong style="text-transform: uppercase;">{{from}}-{{to}}</strong>
         <strong>{{departure}}-{{return}}</strong>
         <strong>{{price}}</strong>
     </span>
-
-<div>{{description}}</div>
 </div>

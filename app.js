@@ -140,12 +140,14 @@ async function checkFlights(){
 
         var emailString = results.reduce(
             (a, r) => a += trip_template
-                .replace("{{from}}", r.from)
-                .replace("{{to}}", r.to)
+                .replace("{{from}}", r.fromLocation)
+                .replace("{{to}}", r.toLocation)
                 .replace("{{departure}}", r.departureDate.toLocaleDateString('en-US'))
                 .replace("{{return}}", r.returnDate.toLocaleDateString('en-US'))
                 .replace("{{price}}", Currency.format(r.price))
                 .replace("{{name}}", r.name ? r.name : "")
+                .replace("{{airline}}", r.airline)
+                .replace("{{thumbnail}}", r.thumbnail)
                 .replace("{{description}}", r.description),
             "",
         );
@@ -215,13 +217,19 @@ async function getFlights(options){
         await page.waitForTimeout(900);
 		await page.getByLabel('Best Flights, Change sort').click({delay : 100});
 		await page.getByLabel('Select your sort order.').getByText('Price').click({delay : 100});
-        await page.waitForTimeout(1000);
+        await page.getByLabel('All filters').click({delay : 100});
+		await page.getByLabel('Hide separate tickets', { exact: true }).check({delay : 100});
+		await page.getByLabel('Hide separate tickets', { exact: true }).press('Escape', {delay : 100});
+        await page.waitForTimeout(2000);
 		
 		var flightInfoList = await page.$$eval('.pIav2d', items =>
 			items.map(item => ({
-				description:item.querySelector('.JMc5Xc').ariaLabel.trim().replace(" Select flight", ""), 
+				//description:item.querySelector('.JMc5Xc').ariaLabel.trim().replace(" Select flight", ""), 
 				airline: item.querySelector('.sSHqwe').textContent.trim(),
-				travelTime: item.querySelector('.gvkrdb').textContent.trim(),
+                thumbnail: item.querySelector('.EbY4Pc').getAttribute("style").split(";")[0]
+                    .replace('--travel-primitives-themeable-image-default: url(', "")
+                    .replace(')', '').trim(),
+				//travelTime: item.querySelector('.gvkrdb').textContent.trim(),
 				price: parseFloat(item
                     .querySelector('.YMlIz.FpEdX')
                     .children[0].textContent
@@ -234,12 +242,7 @@ async function getFlights(options){
 		await browser.close();
 	}
 
-	return flightInfoList.map(f => ({
-        ...f,
-        from: options.fromLocation,
-        to: options.toLocation,
-        departureDate: options.departureDate,
-        returnDate: options.returnDate,
-        name: options.tripName
-    }));
+    var distinct = Array.from(new Set(flightInfoList.map(JSON.stringify))).map(JSON.parse);
+    
+	return distinct.map(f => ({...options, ...f}));
 };
